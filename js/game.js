@@ -1,219 +1,230 @@
 function Game(ball, platform) {
-  var me = this;
-  this.ctx = null;
-  this.width = 960;
-  this.height = 540;
-  this.blocks = [];
-  this.rows = 3;
-  this.cols = 6;
-  this.score = 0;
-  this.running = false;
+    var me = this;
+    this.ctx = null;
+    this.width = 960;
+    this.height = 540;
+    this.blocks = [];
+    this.rows = 3;
+    this.cols = 6;
+    this.score = 0;
+    this.running = false;
+    this.handlers = {};
 
-  this.ball = ball;
-  this.platform = platform;
+    this.ball = ball;
+    this.platform = platform;
 
-  this.sounds = {
-    jump: null,
-    bump: null,
-    theme: null,
-    gameOver: null,
-    winner: null,
-  };
-
-  this.sprites = {
-    ball: null,
-    platform: null,
-    block: null,
-  };
-
-  this.controls = {
-    key37: false,
-    key39: false,
-    key32: false,
-  };
-
-  this.init = function () {
-    this.running = true;
-    this.ctx = document.getElementById("mycanvas").getContext("2d");
-    this.setEvents();
-    this.setTextFont();
-  };
-
-  this.setKey = function (keyCode, keyState) {
-    this.controls["key" + keyCode] = keyState;
-  };
-
-  this.handleKeyDown = function () {
-    if (this.controls.key32) {
-      me.platform.fire();
-      me.playSound("theme");
-    }
-    if (this.controls.key37) {
-      me.platform.moveLeft();
-    }
-    if (this.controls.key39) {
-      me.platform.moveRight();
-    }
-  };
-
-  this.setTextFont = function () {
-    this.ctx.font = "20px Ubuntu, Helvetica, sans-serif";
-    this.ctx.fillStyle = "black";
-  };
-
-  this.setEvents = function () {
-    window.addEventListener("keydown", function (evt) {
-      me.setKey(evt.keyCode, true);
-      me.handleKeyDown();
-    });
-
-    window.addEventListener("keyup", function (evt) {
-      me.setKey(evt.keyCode, false);
-      me.platform.stop();
-    });
-  };
-
-  this.preload = function (callback) {
-    var loaded = 0;
-    var totalSpritesLength = Object.getOwnPropertyNames(this.sprites).length;
-    var totalSoundsLength = Object.getOwnPropertyNames(this.sounds).length;
-    var totalForPreload = totalSpritesLength + totalSoundsLength;
-
-    var onResourceLoad = function () {
-      ++loaded;
-      if (loaded >= totalForPreload) {
-        callback();
-      }
+    this.sounds = {
+        jump: null,
+        bump: null,
+        theme: null,
+        gameOver: null,
+        winner: null,
     };
 
-    this.loadSprites(onResourceLoad);
-    this.loadSounds(onResourceLoad);
-  };
+    this.sprites = {
+        ball: null,
+        platform: null,
+        block: null,
+    };
 
-  this.loadSprites = function (callback) {
-    for (var key in this.sprites) {
-      this.sprites[key] = new Image();
-      this.sprites[key].src = "assets/img/" + key + ".png";
-      this.sprites[key].addEventListener("load", callback);
+    this.controls = {
+        key37: false,
+        key39: false,
+        key32: false,
+    };
+
+    this.init = function () {
+        this.running = true;
+        this.ctx = document.getElementById("mycanvas").getContext("2d");
+        this.setEvents();
+        this.setTextFont();
+    };
+
+    this.setKey = function (keyCode, keyState) {
+        this.controls["key" + keyCode] = keyState;
+    };
+
+    this.handleKeyDown = function () {
+        if (this.controls.key32) {
+            me.platform.fire();
+            me.playSound("theme");
+        }
+        if (this.controls.key37) {
+            me.platform.moveLeft();
+        }
+        if (this.controls.key39) {
+            me.platform.moveRight();
+        }
+    };
+
+    this.setTextFont = function () {
+        this.ctx.font = "20px Ubuntu, Helvetica, sans-serif";
+        this.ctx.fillStyle = "black";
+    };
+
+    this.setEvents = function () {
+
+        this.handlers["keyDown"] = function onWindowKeyDown(evt) {
+            me.setKey(evt.keyCode, true);
+            me.handleKeyDown();
+        }
+
+        this.handlers["keyUp"] = function onWindowKeyUp(evt) {
+            me.setKey(evt.keyCode, false);
+            me.platform.stop();
+        }
+
+        window.addEventListener("keydown", this.handlers["keyDown"]);
+        window.addEventListener("keyup", this.handlers["keyUp"]);
+    };
+
+    this.removeEvents = function () {
+        window.removeEventListener("keydown", this.handlers["keyDown"]);
+        window.removeEventListener("keyup", this.handlers["keyUp"]);
     }
-  };
 
-  this.loadSounds = function (callback) {
-    for (var key in this.sounds) {
-      this.sounds[key] = new Audio("assets/sounds/" + key + ".mp3");
-      this.sounds[key].addEventListener("canplaythrough", callback, { once: true });
-    }
-  };
+    this.preload = function (callback) {
+        var loaded = 0;
+        var totalSpritesLength = Object.getOwnPropertyNames(this.sprites).length;
+        var totalSoundsLength = Object.getOwnPropertyNames(this.sounds).length;
+        var totalForPreload = totalSpritesLength + totalSoundsLength;
 
-  this.update = function () {
-    this.collideBlocks();
-    this.collidePlatform();
-    this.ball.collideWorldBounds(function () {
-      me.end("gameOver");
-    });
-    this.platform.collideWorldBounds(this.width);
-    this.platform.move();
-    this.ball.fly();
-  };
+        var onResourceLoad = function () {
+            ++loaded;
+            if (loaded >= totalForPreload) {
+                callback();
+            }
+        };
 
-  this.clear = function () {
-    this.ctx.clearRect(0, 0, this.width, this.height);
-  };
+        this.loadSprites(onResourceLoad);
+        this.loadSounds(onResourceLoad);
+    };
 
-  this.render = function () {
-    this.ctx.save();
-    this.ctx.drawImage(this.sprites.ball, this.ball.x, this.ball.y);
-    this.ctx.drawImage(this.sprites.platform, this.platform.x, this.platform.y);
-    this.renderText("Score: " + this.score);
-    this.renderBlocks();
-    this.ctx.restore();
-  };
+    this.loadSprites = function (callback) {
+        for (var key in this.sprites) {
+            this.sprites[key] = new Image();
+            this.sprites[key].src = "assets/img/" + key + ".png";
+            this.sprites[key].addEventListener("load", callback);
+        }
+    };
 
-  this.renderText = function (text) {
-    this.ctx.fillText(text, 10, 20);
-  };
+    this.loadSounds = function (callback) {
+        for (var key in this.sounds) {
+            this.sounds[key] = new Audio("assets/sounds/" + key + ".mp3");
+            this.sounds[key].addEventListener("canplaythrough", callback, {once: true});
+        }
+    };
 
-  this.createBlocks = function () {
-    for (var row = 0; row < this.rows; row++) {
-      for (var col = 0; col < this.cols; col++) {
-        this.blocks.push(new Block(col, row));
-      }
-    }
-  };
+    this.clear = function () {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+    };
 
-  this.renderBlocks = function () {
-    for (var block in this.blocks) {
-      var currentBlock = this.blocks[block];
-      if (currentBlock.active) {
-        this.ctx.drawImage(this.sprites.block, currentBlock.x, currentBlock.y);
-      }
-    }
-  };
+    this.render = function () {
+        this.ctx.save();
+        this.ctx.drawImage(this.sprites.ball, this.ball.x, this.ball.y);
+        this.ctx.drawImage(this.sprites.platform, this.platform.x, this.platform.y);
+        this.renderText("Score: " + this.score);
+        this.renderBlocks();
+        this.ctx.restore();
+    };
 
-  this.collideBlocks = function () {
-    for (var block in this.blocks) {
-      var currentBlock = this.blocks[block];
-      if (currentBlock.active && this.ball.collide(currentBlock)) {
-        this.ball.bumpBlock(currentBlock);
-        this.playSound("bump");
-        this.addScore();
-      }
-    }
-  };
+    this.renderText = function (text) {
+        this.ctx.fillText(text, 10, 20);
+    };
 
-  this.collidePlatform = function () {
-    if (this.ball.collide(this.platform)) {
-      this.ball.bumpPlatform(this.platform);
-      this.playSound("jump");
-    }
-  };
+    this.createBlocks = function () {
+        for (var row = 0; row < this.rows; row++) {
+            for (var col = 0; col < this.cols; col++) {
+                this.blocks.push(new Block(col, row));
+            }
+        }
+    };
 
-  this.addScore = function () {
-    ++this.score;
-    if (this.score >= this.blocks.length) {
-      this.end("winner");
-    }
-  };
+    this.renderBlocks = function () {
+        for (var block in this.blocks) {
+            var currentBlock = this.blocks[block];
+            if (currentBlock.active) {
+                this.ctx.drawImage(this.sprites.block, currentBlock.x, currentBlock.y);
+            }
+        }
+    };
 
-  this.run = function () {
-    if (this.running) {
-      window.requestAnimationFrame(function () {
-        me.update();
-        me.clear();
-        me.render();
-        me.run();
-      });
-    }
-  };
+    this.collideBlocks = function () {
+        for (var block in this.blocks) {
+            var currentBlock = this.blocks[block];
+            if (currentBlock.active && this.ball.isCollision(currentBlock)) {
+                this.ball.bumpBlock();
+                currentBlock.destroy();
+                this.playSound("bump");
+                this.addScore();
+            }
+        }
+    };
 
-  this.start = function () {
-    me.init();
+    this.collidePlatform = function () {
+        if (this.ball.isCollision(this.platform)) {
+            this.ball.bumpPlatform(this.platform);
+            this.playSound("jump");
+        }
+    };
 
-    me.preload(function () {
-      me.update();
-      me.createBlocks();
-      me.run();
-    });
-  };
+    this.addScore = function () {
+        ++this.score;
+        if (this.score >= this.blocks.length) {
+            this.end("winner");
+        }
+    };
 
-  this.end = function (sound) {
-    this.running = false;
-    this.pauseSound("theme");
-    this.playSound(sound, me.reload);
-  };
+    this.update = function () {
+        this.collideBlocks();
+        this.collidePlatform();
+        this.ball.collideWorldBounds(function () {
+            me.end("gameOver");
+        });
+        this.platform.collideWorldBounds(this.width);
+        this.platform.move();
+        this.ball.fly();
+    };
 
-  this.reload = function () {
-    window.location.reload();
-  };
+    this.run = function () {
+        if (this.running) {
+            window.requestAnimationFrame(function () {
+                me.update();
+                me.clear();
+                me.render();
+                me.run();
+            });
+        }
+    };
 
-  this.playSound = function (sound, callback) {
-    this.sounds[sound].play();
-    if (callback) {
-      this.sounds[sound].addEventListener("ended", callback);
-    }
-  };
+    this.start = function () {
+        me.init();
+        me.preload(function () {
+            me.update();
+            me.createBlocks();
+            me.run();
+        });
+    };
 
-  this.pauseSound = function (sound) {
-    this.sounds[sound].pause();
-  };
+    this.end = function (sound) {
+        this.running = false;
+        this.removeEvents();
+        this.pauseSound("theme");
+        this.playSound(sound, me.reload);
+    };
+
+    this.reload = function () {
+        window.location.reload();
+    };
+
+    this.playSound = function (sound, callback) {
+        this.sounds[sound].play();
+        if (callback) {
+            this.sounds[sound].addEventListener("ended", callback);
+        }
+    };
+
+    this.pauseSound = function (sound) {
+        this.sounds[sound].pause();
+    };
 }
