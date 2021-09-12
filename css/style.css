@@ -1,0 +1,29 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    color: #fff;
+    font: 20px "Ubuntu", "Helvetica", sans-serif;
+}
+
+canvas {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    background: #d6f4ff url("../assets/img/main-bg.jpg") no-repeat center / cover;
+}
+
+.content {
+    display: inline-block;
+    padding: 6px;
+    text-align: center;
+    border: 2px solid #fff;
+}
+.title {
+    font-size: 16px;
+}
+.description {
+    font-size: 12px;
+}

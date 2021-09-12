@@ -4,35 +4,14 @@
     <meta charset="UTF-8" />
     <title>Simple arkanoid</title>
     <link rel="icon" href="./assets/img/favicon.ico" />
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: #000000;
-        color: #fff;
-        font: 20px "Ubuntu", "Helvetica", sans-serif;
-      }
-
-      canvas {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 10;
-        background: #d6f4ff url(./assets/img/main-bg.jpg) no-repeat center / cover;
-      }
-
-      .content {
-        padding: 40px;
-      }
-    </style>
+    <link rel="stylesheet" href="./css/style.css">
   </head>
 
   <body>
     <div class="content">
-      <h1>CONTROLS:</h1>
-      <p><b>SPACE</b> - start a game</p>
-      <p><b>LEFT, RIGHT</b> - moving platform</p>
+      <h1 class="title">CONTROLS:</h1>
+      <p class="description"><b>SPACE</b> - start a game</p>
+      <p class="description"><b>LEFT, RIGHT</b> - moving platform</p>
     </div>
     <canvas id="mycanvas" width="960" height="540"></canvas>
 
